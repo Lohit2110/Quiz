@@ -1,3 +1,4 @@
 
 Flask
+gunicorn
 # Add any other dependencies below if needed
