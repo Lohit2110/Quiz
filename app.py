@@ -26,6 +26,22 @@ def index():
         quiz_files = [f for f in os.listdir('quizzes') if f.endswith('.json')]
     return render_template('index.html', quiz_files=quiz_files)
 
+# Route to rename a quiz file
+@app.route('/rename_quiz', methods=['POST'])
+def rename_quiz():
+    old_name = request.form.get('old_name')
+    new_name = request.form.get('new_name')
+    if not old_name or not new_name:
+        return redirect('/')
+    # Ensure .json extension
+    if not new_name.endswith('.json'):
+        new_name += '.json'
+    old_path = os.path.join('quizzes', old_name)
+    new_path = os.path.join('quizzes', new_name)
+    if os.path.exists(old_path):
+        os.rename(old_path, new_path)
+    return redirect('/')
+
 @app.route('/make_quiz', methods=['GET', 'POST'])
 def make_quiz():
     if request.method == 'POST':
