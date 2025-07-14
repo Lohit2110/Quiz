@@ -1,0 +1,36 @@
+<!-- templates/quiz.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Take Quiz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-tr from-blue-100 to-pink-100 py-10">
+  <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+    <h2 class="text-3xl font-bold text-center text-blue-700 mb-6">Take the Quiz</h2>
+    <form action="/submit_quiz" method="post">
+      {% for q in questions %}
+        <div class="mb-8 border-b pb-4">
+          <h4 class="text-lg font-semibold mb-2 text-gray-700">Q{{ loop.index }} <span class="text-sm text-gray-500">({{ q['marks'] }} marks)</span></h4>
+          {% if q['question'] %}
+            <p class="mb-4 text-gray-800">{{ q['question'] }}</p>
+          {% endif %}
+          {% if q['q_img'] %}
+            <img src="/{{ q['q_img'] }}" alt="Question Image" class="w-full max-w-md mb-4">
+          {% endif %}
+          <div class="space-y-2">
+            <label class="block"><input type="radio" name="q_{{ loop.index0 }}" value="A" class="mr-2" required> {{ q['opt_a'] }}</label>
+            <label class="block"><input type="radio" name="q_{{ loop.index0 }}" value="B" class="mr-2"> {{ q['opt_b'] }}</label>
+            <label class="block"><input type="radio" name="q_{{ loop.index0 }}" value="C" class="mr-2"> {{ q['opt_c'] }}</label>
+            <label class="block"><input type="radio" name="q_{{ loop.index0 }}" value="D" class="mr-2"> {{ q['opt_d'] }}</label>
+          </div>
+        </div>
+      {% endfor %}
+      <input type="hidden" name="from_file" value="1">
+      <input type="hidden" name="quiz_file" value="{{ quiz_file if quiz_file else '' }}">
+      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition">Submit Quiz</button>
+    </form>
+  </div>
+</body>
+</html>
