@@ -1,0 +1,274 @@
+<!-- templates/quiz_question.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Question {{ question_num }} - Quiz Master</title>
+  
+  <!-- Favicon - Multiple formats for maximum compatibility -->
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}?v=2">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon.png') }}?v=2">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}?v=2">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.png') }}?v=2">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-tr from-indigo-100 via-purple-100 to-pink-100 min-h-screen py-6">
+  
+  <div class="max-w-4xl mx-auto px-4">
+    <!-- Header with Progress -->
+    <div class="bg-white rounded-2xl shadow-xl mb-8 p-6 animate-fade-in">
+      <div class="flex flex-col gap-4">
+        <!-- Top Row: Logo, Title, Navigation Info -->
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div class="flex items-center">
+            <div class="logo mr-4" style="width: 50px; height: 50px; margin-right: 1rem;">
+              <span class="logo-text" style="font-size: 1.5rem;">Q</span>
+            </div>
+            <div>
+              <h2 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Question {{ question_num }}
+              </h2>
+              <p class="text-gray-600">of {{ total_questions }} questions</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div id="timer" class="px-4 py-2 bg-red-50 text-red-700 rounded-xl font-medium flex items-center gap-2">
+              <i class="fas fa-clock"></i>
+              <span id="time-display">--:--</span>
+            </div>
+            <a href="/" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition flex items-center gap-2">
+              <i class="fas fa-home"></i> Home
+            </a>
+          </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div class="progress-bar bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full" 
+               style="width: {{ (question_num / total_questions * 100) }}%"></div>
+        </div>
+        
+        <!-- Progress Text -->
+        <div class="flex justify-between text-sm text-gray-600">
+          <span>{{ ((question_num / total_questions * 100) | round(1)) }}% Complete</span>
+          <span>{{ total_questions - question_num }} questions remaining</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Question Card -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 animate-fade-in">
+      <!-- Question Content -->
+      <div class="mb-8">
+        <!-- Question Number Badge -->
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-4">
+            <span class="w-12 h-12 flex items-center justify-center bg-indigo-600 text-white rounded-xl font-bold text-xl">
+              {{ question_num }}
+            </span>
+            <span class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2">
+              <i class="fas fa-star text-yellow-500"></i> {{ question['marks'] }} points
+            </span>
+          </div>
+        </div>
+
+        <!-- Question Text -->
+        {% if question['question'] %}
+        <div class="mb-6">
+          <p class="text-gray-700 text-lg whitespace-pre-line leading-relaxed">{{ question['question'] }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Question Image -->
+        {% if question['q_img'] %}
+        <div class="bg-gray-50 p-6 rounded-xl mb-6">
+          <img src="/{{ question['q_img'] }}" alt="Question Image" 
+               class="rounded-xl shadow-lg max-w-full h-auto max-h-[400px] object-contain mx-auto">
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Answer Form -->
+      <form id="quiz-form" action="/save_answer" method="post">
+        <input type="hidden" name="quiz_file" value="{{ quiz_file }}">
+        <input type="hidden" name="question_num" value="{{ question_num }}">
+        <input type="hidden" name="action" value="" id="form-action">
+
+        <!-- Options -->
+        <div class="space-y-4 mb-8">
+          {% for opt, label in [('A', question['opt_a']), ('B', question['opt_b']), ('C', question['opt_c']), ('D', question['opt_d'])] %}
+          <label class="relative block cursor-pointer group">
+            <input type="radio" name="answer" value="{{ opt }}" class="peer sr-only" 
+                   {% if current_answer == opt %}checked{% endif %}>
+            <div class="flex items-center bg-white border-2 border-gray-200 p-6 rounded-xl
+                        peer-checked:border-indigo-500 peer-checked:bg-indigo-50 
+                        group-hover:border-indigo-200 group-hover:bg-indigo-25 
+                        transition-all duration-200 shadow-sm hover:shadow-md">
+              <span class="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-lg mr-4 
+                         peer-checked:bg-indigo-500 peer-checked:text-white font-bold text-lg
+                         group-hover:bg-indigo-100 transition-all">
+                {{ opt }}
+              </span>
+              <span class="text-gray-700 peer-checked:text-indigo-700 font-medium text-lg flex-1">
+                {{ label }}
+              </span>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </form>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="bg-white rounded-2xl shadow-xl p-6 animate-fade-in">
+      <div class="flex justify-between items-center">
+        <div class="flex gap-3">
+          {% if question_num > 1 %}
+          <button onclick="submitForm('previous')" 
+                  class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition flex items-center gap-2 font-medium">
+            <i class="fas fa-arrow-left"></i> Previous
+          </button>
+          {% else %}
+          <div></div>
+          {% endif %}
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- Question Status Indicators -->
+          <div class="hidden sm:flex items-center gap-2">
+            {% for i in range(1, total_questions + 1) %}
+            <div class="w-3 h-3 rounded-full 
+                        {% if i < question_num %}bg-green-500
+                        {% elif i == question_num %}bg-indigo-500
+                        {% else %}bg-gray-300{% endif %}"></div>
+            {% endfor %}
+          </div>
+
+          <!-- Save and Continue / Submit -->
+          {% if question_num < total_questions %}
+          <button onclick="submitForm('next')" 
+                  class="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl 
+                         hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 
+                         flex items-center gap-2 shadow-lg">
+            Save & Next <i class="fas fa-arrow-right"></i>
+          </button>
+          {% else %}
+          <button onclick="submitForm('submit')" 
+                  class="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-xl 
+                         hover:from-green-700 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 
+                         flex items-center gap-2 shadow-lg">
+            <i class="fas fa-paper-plane"></i> Submit Quiz
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Skip for Now Option -->
+    <div class="text-center mt-6">
+      {% if question_num < total_questions %}
+      <button onclick="submitForm('next')" 
+              class="text-gray-500 hover:text-indigo-600 transition flex items-center gap-2 mx-auto">
+        <i class="fas fa-forward"></i> Skip this question for now
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    // Timer functionality
+    let timeLeft = {{ time_limit|default(30) }} * 60; // Convert minutes to seconds
+    let timerInterval;
+    
+    function updateTimer() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      document.getElementById('time-display').textContent = display;
+      
+      // Change color when time is running low
+      const timerEl = document.getElementById('timer');
+      if (timeLeft <= 300) { // 5 minutes
+        timerEl.className = timerEl.className.replace('bg-red-50 text-red-700', 'bg-red-100 text-red-800');
+      }
+      if (timeLeft <= 60) { // 1 minute
+        timerEl.className = timerEl.className.replace('bg-red-100 text-red-800', 'bg-red-200 text-red-900');
+      }
+      
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        alert('Time is up! Submitting the quiz...');
+        submitForm('submit');
+        return;
+      }
+      
+      timeLeft--;
+    }
+    
+    // Start timer
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+    
+    // Form submission function
+    function submitForm(action) {
+      document.getElementById('form-action').value = action;
+      document.getElementById('quiz-form').submit();
+    }
+    
+    // Auto-save functionality (save answer when option is selected)
+    document.querySelectorAll('input[name="answer"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        // Visual feedback
+        const selectedLabel = this.closest('label');
+        selectedLabel.classList.add('ring-2', 'ring-indigo-300');
+        setTimeout(() => {
+          selectedLabel.classList.remove('ring-2', 'ring-indigo-300');
+        }, 300);
+      });
+    });
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowLeft' && {{ question_num }} > 1) {
+        submitForm('previous');
+      } else if (e.key === 'ArrowRight') {
+        {% if question_num < total_questions %}
+        submitForm('next');
+        {% else %}
+        submitForm('submit');
+        {% endif %}
+      } else if (e.key >= '1' && e.key <= '4') {
+        const options = ['A', 'B', 'C', 'D'];
+        const option = options[parseInt(e.key) - 1];
+        const radio = document.querySelector(`input[value="${option}"]`);
+        if (radio) {
+          radio.checked = true;
+          radio.dispatchEvent(new Event('change'));
+        }
+      }
+    });
+    
+    // Prevent accidental page refresh
+    window.addEventListener('beforeunload', function(e) {
+      e.preventDefault();
+      e.returnValue = '';
+    });
+  </script>
+</body>
+</html>

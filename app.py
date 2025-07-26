@@ -149,7 +149,141 @@ def take_quiz(quiz_file):
     time_limit = request.args.get('time_limit', default=30, type=int)  # Default 30 minutes
     with open(os.path.join(QUIZ_FOLDER, quiz_file), 'r', encoding='utf-8') as f:
         questions = json.load(f)
-    return render_template('quiz.html', questions=questions, from_file=True, quiz_file=quiz_file, time_limit=time_limit)
+    
+    # Initialize session for this quiz
+    session['quiz_file'] = quiz_file
+    session['time_limit'] = time_limit
+    session['total_questions'] = len(questions)
+    session['quiz_answers'] = {}  # Store answers as user progresses
+    
+    # Redirect to first question
+    return redirect(url_for('quiz_question', quiz_file=quiz_file, question_num=1))
+
+@app.route('/quizzes/<quiz_file>/question/<int:question_num>')
+def quiz_question(quiz_file, question_num):
+    # Load quiz data
+    with open(os.path.join(QUIZ_FOLDER, quiz_file), 'r', encoding='utf-8') as f:
+        questions = json.load(f)
+    
+    # Validate question number
+    if question_num < 1 or question_num > len(questions):
+        return redirect(url_for('take_quiz', quiz_file=quiz_file))
+    
+    # Get current question (adjust for 0-based indexing)
+    current_question = questions[question_num - 1]
+    
+    # Get session data
+    time_limit = session.get('time_limit', 30)
+    total_questions = len(questions)
+    quiz_answers = session.get('quiz_answers', {})
+    
+    return render_template('quiz_question.html', 
+                         question=current_question,
+                         question_num=question_num,
+                         total_questions=total_questions,
+                         quiz_file=quiz_file,
+                         time_limit=time_limit,
+                         current_answer=quiz_answers.get(str(question_num - 1), ''))
+
+@app.route('/save_answer', methods=['POST'])
+def save_answer():
+    quiz_file = request.form.get('quiz_file')
+    question_num = int(request.form.get('question_num'))
+    answer = request.form.get('answer', '')
+    action = request.form.get('action')  # 'next', 'previous', or 'submit'
+    
+    # Initialize quiz_answers if not exists
+    if 'quiz_answers' not in session:
+        session['quiz_answers'] = {}
+    
+    # Save the answer (adjust for 0-based indexing)
+    session['quiz_answers'][str(question_num - 1)] = answer
+    session.modified = True
+    
+    # Load quiz to get total questions
+    with open(os.path.join(QUIZ_FOLDER, quiz_file), 'r', encoding='utf-8') as f:
+        questions = json.load(f)
+    total_questions = len(questions)
+    
+    # Handle navigation
+    if action == 'next' and question_num < total_questions:
+        return redirect(url_for('quiz_question', quiz_file=quiz_file, question_num=question_num + 1))
+    elif action == 'previous' and question_num > 1:
+        return redirect(url_for('quiz_question', quiz_file=quiz_file, question_num=question_num - 1))
+    elif action == 'submit':
+        return redirect(url_for('submit_paginated_quiz'))
+    else:
+        # If at last question and clicking next, go to submit
+        if question_num == total_questions:
+            return redirect(url_for('submit_paginated_quiz'))
+        else:
+            return redirect(url_for('quiz_question', quiz_file=quiz_file, question_num=question_num))
+
+@app.route('/submit_paginated_quiz')
+def submit_paginated_quiz():
+    quiz_file = session.get('quiz_file')
+    quiz_answers = session.get('quiz_answers', {})
+    
+    if not quiz_file:
+        return redirect(url_for('index'))
+    
+    # Load quiz questions
+    with open(os.path.join(QUIZ_FOLDER, quiz_file), 'r', encoding='utf-8') as f:
+        questions = json.load(f)
+    
+    # Calculate score
+    score = 0
+    total_questions = len(questions)
+    answered_questions = []
+    
+    for i, q in enumerate(questions):
+        user_answer = quiz_answers.get(str(i), '').strip().upper()
+        correct_answer = str(q['correct']).strip().upper()
+        
+        # Handle unanswered questions
+        if user_answer == '':
+            marks = 0
+            is_correct = False
+        else:
+            is_correct = user_answer == correct_answer
+            marks = 4 if is_correct else -1
+        
+        score += marks
+        
+        answered_questions.append({
+            'index': i + 1,
+            'question': q.get('question', ''),
+            'q_img': q.get('q_img', ''),
+            'correct': q['correct'],
+            'user_answer': user_answer,
+            'is_correct': is_correct,
+            'marks_obtained': marks,
+            'opt_a': q.get('opt_a', ''),
+            'opt_b': q.get('opt_b', ''),
+            'opt_c': q.get('opt_c', ''),
+            'opt_d': q.get('opt_d', '')
+        })
+    
+    max_score = total_questions * 4
+    
+    # Store results in session for PDF download
+    session['score'] = score
+    session['max_score'] = max_score
+    session['answered_questions'] = answered_questions
+    
+    # Clear quiz session data
+    session.pop('quiz_file', None)
+    session.pop('quiz_answers', None)
+    session.pop('time_limit', None)
+    session.pop('total_questions', None)
+    session.modified = True
+    
+    return render_template('result.html', 
+                        score=score, 
+                        max_score=max_score,
+                        answered_questions=answered_questions,
+                        total_questions=total_questions,
+                        quiz_file=quiz_file)
 
 @app.route('/submit_quiz', methods=['POST'])
 def submit_quiz():
