@@ -6,6 +6,7 @@
   <title>Quiz Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <style>
     @keyframes slideIn {
       from { transform: translateY(20px); opacity: 0; }
@@ -24,12 +25,17 @@
 </head>
 <body class="bg-gradient-to-tr from-indigo-100 via-purple-100 to-pink-100 min-h-screen py-8 px-4">
   <div class="max-w-6xl mx-auto">
-    <!-- Header -->
-    <div class="text-center mb-12 animate-slide-in">
-      <h1 class="text-5xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
-        Quiz Dashboard
-      </h1>
-      <p class="text-gray-600 text-lg">Create, manage, and take quizzes with ease</p>
+    <!-- Header with Logo -->
+    <div class="text-center header-with-logo animate-slide-in">
+      <div class="logo-container">
+        <div class="logo">
+          <span class="logo-text">Q</span>
+        </div>
+        <div class="logo-title">
+          <h1 class="logo-main-text">Quiz Master</h1>
+          <p class="logo-sub-text">Create, manage, and take quizzes with ease</p>
+        </div>
+      </div>
     </div>
 
     <div class="grid md:grid-cols-2 gap-8">

@@ -6,15 +6,21 @@
   <title>{{ 'Edit' if edit_mode else 'Create' }} Quiz</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="bg-gradient-to-tr from-indigo-100 via-purple-100 to-pink-100 min-h-screen py-6">
   <!-- Fixed Header -->
   <div class="fixed top-0 left-0 right-0 bg-white shadow-lg z-50">
     <div class="max-w-5xl mx-auto px-4 py-4">
       <div class="flex justify-between items-center">
-        <h2 class="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-          {{ 'Edit' if edit_mode else 'Create' }} Quiz
-        </h2>
+        <div class="flex items-center">
+          <div class="logo mr-4" style="width: 50px; height: 50px; margin-right: 1rem;">
+            <span class="logo-text" style="font-size: 1.5rem;">Q</span>
+          </div>
+          <h2 class="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            {{ 'Edit' if edit_mode else 'Create' }} Quiz
+          </h2>
+        </div>
         <a href="/" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center gap-2">
           <i class="fas fa-arrow-left"></i> Back to Home
         </a>

@@ -1,0 +1,4 @@
+<!-- This is a placeholder for your logo. Replace this file with your actual logo image -->
+<!-- Recommended formats: PNG, SVG, or JPG -->
+<!-- Recommended size: 80x80 pixels or larger -->
+<!-- You can place your logo file here as: logo.png, logo.svg, or logo.jpg -->
