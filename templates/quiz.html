@@ -2,35 +2,266 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Take Quiz</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    @keyframes countdown {
+      from { transform: scale(2); opacity: 0; }
+      50% { transform: scale(1.5); opacity: 1; }
+      to { transform: scale(1); opacity: 0; }
+    }
+    @keyframes goodLuck {
+      from { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .animate-countdown {
+      animation: countdown 1s ease-in-out forwards;
+    }
+    .animate-goodluck {
+      animation: goodLuck 1s ease-in-out forwards;
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-tr from-blue-100 to-pink-100 py-10">
-  <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
-    <h2 class="text-3xl font-bold text-center text-blue-700 mb-6">Take the Quiz</h2>
-    <form action="/submit_quiz" method="post">
-      {% for q in questions %}
-        <div class="mb-8 border-b pb-4">
-          <h4 class="text-lg font-semibold mb-2 text-gray-700">Q{{ loop.index }} <span class="text-sm text-gray-500">({{ q['marks'] }} marks)</span></h4>
-          {% if q['question'] %}
-            <p class="mb-4 text-gray-800">{{ q['question'] }}</p>
-          {% endif %}
-          {% if q['q_img'] %}
-            <img src="/{{ q['q_img'] }}" alt="Question Image" class="w-full max-w-md mb-4">
-          {% endif %}
-          <div class="space-y-2">
-            <label class="block"><input type="radio" name="q_{{ loop.index0 }}" value="A" class="mr-2" required> {{ q['opt_a'] }}</label>
-            <label class="block"><input type="radio" name="q_{{ loop.index0 }}" value="B" class="mr-2"> {{ q['opt_b'] }}</label>
-            <label class="block"><input type="radio" name="q_{{ loop.index0 }}" value="C" class="mr-2"> {{ q['opt_c'] }}</label>
-            <label class="block"><input type="radio" name="q_{{ loop.index0 }}" value="D" class="mr-2"> {{ q['opt_d'] }}</label>
-          </div>
+<body class="bg-gradient-to-tr from-indigo-100 via-purple-100 to-pink-100 min-h-screen py-6">
+  <!-- Countdown Overlay -->
+  <div id="countdownOverlay" class="fixed inset-0 flex items-center justify-center z-[100] bg-black bg-opacity-80">
+    <div class="text-center">
+      <div id="countdown" class="text-8xl font-bold text-white mb-4 opacity-0"></div>
+      <div id="goodLuck" class="hidden">
+        <div class="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent mb-2">
+          Best of Luck!
         </div>
+        <div class="text-xl text-gray-300">Your time starts now</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Fixed Timer -->
+  <div class="fixed top-4 right-4 z-50">
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3">
+        <p class="text-white text-sm font-medium flex items-center gap-2">
+          <i class="fas fa-clock"></i> Time Remaining
+        </p>
+      </div>
+      <div class="p-4 flex items-center gap-3" id="timer">
+        <span class="font-mono text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          <span id="minutes">--</span>:<span id="seconds">--</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-4xl mx-auto px-4">
+    <!-- Header -->
+    <div class="bg-white rounded-2xl shadow-xl mb-8 p-6">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <h2 class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          Quiz Time!
+        </h2>
+        <div class="flex items-center gap-3">
+          <div class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-xl font-medium flex items-center gap-2">
+            <i class="fas fa-question-circle"></i>
+            <span>Questions: {{ questions|length }}</span>
+          </div>
+          <a href="/" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition flex items-center gap-2">
+            <i class="fas fa-home"></i> Home
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <form action="/submit_quiz" method="post" class="space-y-8">
+      {% for q in questions %}
+      <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition duration-300 mb-8">
+        <!-- Question Header -->
+        <div class="flex justify-between items-center mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl">
+          <div class="flex items-center gap-4">
+            <span class="w-12 h-12 flex items-center justify-center bg-indigo-600 text-white rounded-xl font-bold text-xl">
+              {{ loop.index }}
+            </span>
+            <h3 class="text-2xl font-bold text-indigo-700">Question {{ loop.index }}</h3>
+          </div>
+          <span class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2">
+            <i class="fas fa-star text-yellow-500"></i> {{ q['marks'] }} points
+          </span>
+        </div>
+
+        <!-- Question Content -->
+        <div class="mb-8">
+          {% if q['question'] %}
+          <p class="text-gray-700 text-lg whitespace-pre-line mb-4">{{ q['question'] }}</p>
+          {% endif %}
+
+          {% if q['q_img'] %}
+          <div class="bg-gray-50 p-6 rounded-xl mb-4">
+            <img src="/{{ q['q_img'] }}" alt="Question Image" 
+                 class="rounded-xl shadow-lg max-w-full h-auto max-h-[400px] object-contain mx-auto">
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Options -->
+        <div class="space-y-4">
+          {% set q_index = loop.index0 %}
+          {% for opt, label in [('A', q['opt_a']), ('B', q['opt_b']), ('C', q['opt_c']), ('D', q['opt_d'])] %}
+          <label class="relative block cursor-pointer">
+            <input type="radio" name="q_{{ q_index }}" value="{{ opt }}" class="peer sr-only">
+            <div class="flex items-center bg-white border-2 border-gray-200 p-4 rounded-xl
+                        peer-checked:border-indigo-500 peer-checked:bg-indigo-50 
+                        hover:border-indigo-200 transition-all duration-200">
+              <span class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg mr-4 
+                         peer-checked:bg-indigo-500 peer-checked:text-white font-medium transition-all">
+                {{ opt }}
+              </span>
+              <span class="text-gray-700 peer-checked:text-indigo-700 font-medium text-lg">{{ label }}</span>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
       {% endfor %}
+
       <input type="hidden" name="from_file" value="1">
       <input type="hidden" name="quiz_file" value="{{ quiz_file if quiz_file else '' }}">
-      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700 transition">Submit Quiz</button>
+
+      <!-- Fixed Bottom Action Bar -->
+      <div class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
+        <div class="max-w-4xl mx-auto px-4 py-4">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-4">
+              <a href="/" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition flex items-center gap-2">
+                <i class="fas fa-times"></i> Cancel
+              </a>
+              <p class="text-gray-600">
+                <i class="fas fa-info-circle"></i> Review all answers before submitting
+              </p>
+            </div>
+            <button type="submit" 
+                    class="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl 
+                           hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 
+                           flex items-center gap-2 shadow-lg">
+              <i class="fas fa-paper-plane"></i> Submit Quiz
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Spacing for Fixed Action Bar -->
+      <div class="h-24"></div>
     </form>
   </div>
+
+  <script>
+    // Timer functionality
+    const form = document.querySelector('form');
+    let timeLeft = {{ time_limit|default(30) }} * 60; // Default 30 minutes if not set
+    let timerInterval;
+    
+    // Initial countdown function
+    async function initialCountdown() {
+      const countdownEl = document.getElementById('countdown');
+      const goodLuckEl = document.getElementById('goodLuck');
+      const overlayEl = document.getElementById('countdownOverlay');
+      
+      // Disable form controls during countdown
+      document.querySelectorAll('input, button').forEach(el => el.disabled = true);
+      
+      // Countdown from 3 to 1
+      for (let i = 3; i >= 1; i--) {
+        countdownEl.textContent = i;
+        countdownEl.style.opacity = '0';
+        countdownEl.classList.add('animate-countdown');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        countdownEl.classList.remove('animate-countdown');
+      }
+      
+      // Show "Best of Luck" message
+      countdownEl.style.display = 'none';
+      goodLuckEl.classList.remove('hidden');
+      goodLuckEl.classList.add('animate-goodluck');
+      
+      // Wait 1.5 seconds and remove overlay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      overlayEl.style.transition = 'opacity 0.5s';
+      overlayEl.style.opacity = '0';
+      
+      // Enable form controls
+      document.querySelectorAll('input, button').forEach(el => el.disabled = false);
+      
+      // Remove overlay after fade out
+      setTimeout(() => {
+        overlayEl.remove();
+        // Start the timer
+        startTimer();
+      }, 500);
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        
+        document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+        document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+        
+        if (timeLeft <= 300) { // Last 5 minutes
+          document.getElementById('timer').classList.add('animate-pulse');
+        }
+        
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          form.submit(); // Auto-submit when time is up
+        }
+      }, 1000);
+    }
+
+    function initialCountdown() {
+      const overlay = document.getElementById('countdownOverlay');
+      const countdownEl = document.getElementById('countdown');
+      const goodLuckEl = document.getElementById('goodLuck');
+      let count = 3;
+
+      function updateCountdown() {
+        if (count > 0) {
+          countdownEl.textContent = count;
+          countdownEl.style.opacity = '1';
+          countdownEl.classList.add('animate-countdown');
+          setTimeout(() => {
+            countdownEl.classList.remove('animate-countdown');
+            countdownEl.style.opacity = '0';
+          }, 900);
+          count--;
+          setTimeout(updateCountdown, 1000);
+        } else {
+          countdownEl.style.display = 'none';
+          goodLuckEl.classList.remove('hidden');
+          goodLuckEl.classList.add('animate-goodluck');
+          setTimeout(() => {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+              overlay.style.display = 'none';
+              startTimer();
+            }, 1000);
+          }, 1500);
+        }
+      }
+
+      updateCountdown();
+    }
+
+    // Start the countdown when the page loads
+    window.onload = initialCountdown;
+
+    // Submit the form data when the form is submitted
+    form.addEventListener('submit', () => {
+      clearInterval(timerInterval);
+    });
+  </script>
 </body>
 </html>

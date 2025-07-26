@@ -1,1 +1,201 @@
-<h2>Your Score: {{ score }}</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Results</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-tr from-indigo-100 via-purple-100 to-pink-100 min-h-screen py-6">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-xl mb-8 p-6">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <h2 class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                    Quiz Results
+                </h2>
+                <a href="/" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition flex items-center gap-2">
+                    <i class="fas fa-home"></i> Home
+                </a>
+            </div>
+        </div>
+        
+        <!-- Score Summary Card -->
+        <div class="bg-white p-8 rounded-2xl shadow-xl mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Total Score -->
+                <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 p-6 rounded-xl text-center">
+                    <div class="flex items-center justify-center mb-3">
+                        <i class="fas fa-trophy text-3xl text-indigo-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-indigo-700 mb-2">Total Score</h3>
+                    <p class="text-3xl font-bold text-indigo-600">{{ score }}</p>
+                    <p class="text-sm text-indigo-500 mt-1">out of {{ max_score }}</p>
+                </div>
+                
+                <!-- Correct Answers -->
+                <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl text-center">
+                    <div class="flex items-center justify-center mb-3">
+                        <i class="fas fa-check-circle text-3xl text-green-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-green-700 mb-2">Correct</h3>
+                    <p class="text-3xl font-bold text-green-600">
+                        {{ answered_questions|selectattr('is_correct', 'true')|list|length }}
+                    </p>
+                    <p class="text-sm text-green-500 mt-1">+4 points each</p>
+                </div>
+                
+                <!-- Wrong Answers -->
+                <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-xl text-center">
+                    <div class="flex items-center justify-center mb-3">
+                        <i class="fas fa-times-circle text-3xl text-red-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-red-700 mb-2">Wrong</h3>
+                    <p class="text-3xl font-bold text-red-600">
+                        {{ answered_questions|selectattr('is_correct', 'false')|selectattr('user_answer')|list|length }}
+                    </p>
+                    <p class="text-sm text-red-500 mt-1">-1 point each</p>
+                </div>
+
+                <!-- Unanswered -->
+                <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl text-center">
+                    <div class="flex items-center justify-center mb-3">
+                        <i class="fas fa-question-circle text-3xl text-yellow-600"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-yellow-700 mb-2">Unanswered</h3>
+                    <p class="text-3xl font-bold text-yellow-600">
+                        {{ answered_questions|rejectattr('user_answer')|list|length }}
+                    </p>
+                    <p class="text-sm text-yellow-500 mt-1">0 points each</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Results -->
+        <div class="space-y-8">
+            {% for q in answered_questions %}
+            <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition duration-300
+                        {% if q.is_correct %}border-l-4 border-green-400
+                        {% elif not q.user_answer %}border-l-4 border-yellow-400
+                        {% else %}border-l-4 border-red-400{% endif %}">
+                
+                <!-- Question Header -->
+                <div class="flex justify-between items-center mb-6 bg-gradient-to-r 
+                            {% if q.is_correct %}from-green-50 to-green-100
+                            {% elif not q.user_answer %}from-yellow-50 to-yellow-100
+                            {% else %}from-red-50 to-red-100{% endif %} 
+                            p-4 rounded-xl">
+                    <div class="flex items-center gap-4">
+                        <span class="w-12 h-12 flex items-center justify-center rounded-xl font-bold text-xl
+                                   {% if q.is_correct %}bg-green-600 text-white
+                                   {% elif not q.user_answer %}bg-yellow-600 text-white
+                                   {% else %}bg-red-600 text-white{% endif %}">
+                            {{ q.index }}
+                        </span>
+                        <h4 class="text-xl font-bold 
+                                 {% if q.is_correct %}text-green-700
+                                 {% elif not q.user_answer %}text-yellow-700
+                                 {% else %}text-red-700{% endif %}">
+                            Question {{ q.index }}
+                        </h4>
+                    </div>
+                    <span class="px-4 py-2 rounded-xl text-sm font-medium
+                               {% if q.is_correct %}bg-green-100 text-green-700
+                               {% elif not q.user_answer %}bg-yellow-100 text-yellow-700
+                               {% else %}bg-red-100 text-red-700{% endif %}">
+                        {% if q.is_correct %}+4
+                        {% elif not q.user_answer %}0
+                        {% else %}-1{% endif %} points
+                    </span>
+                </div>
+
+                <!-- Question Content -->
+                {% if q.question %}
+                <div class="mb-6">
+                    <p class="text-gray-700 text-lg whitespace-pre-line">{{ q.question }}</p>
+                </div>
+                {% endif %}
+
+                {% if q.q_img %}
+                <div class="bg-gray-50 p-6 rounded-xl mb-6">
+                    <img src="/{{ q.q_img }}" alt="Question Image" 
+                         class="rounded-xl shadow-lg max-w-full h-auto max-h-[300px] object-contain mx-auto">
+                </div>
+                {% endif %}
+
+                <!-- Answer Options -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    {% for opt, label in [('A', q.opt_a), ('B', q.opt_b), ('C', q.opt_c), ('D', q.opt_d)] %}
+                    <div class="p-4 rounded-xl border-2
+                             {% if opt == q.correct %}bg-green-50 border-green-200 
+                             {% elif opt == q.user_answer and not q.is_correct %}bg-red-50 border-red-200
+                             {% else %}bg-gray-50 border-gray-200{% endif %}">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 flex items-center justify-center rounded-lg font-medium
+                                     {% if opt == q.correct %}bg-green-500 text-white
+                                     {% elif opt == q.user_answer and not q.is_correct %}bg-red-500 text-white
+                                     {% else %}bg-gray-200 text-gray-700{% endif %}">
+                                {{ opt }}
+                            </span>
+                            <span class="font-medium {% if opt == q.correct %}text-green-700
+                                      {% elif opt == q.user_answer and not q.is_correct %}text-red-700
+                                      {% else %}text-gray-700{% endif %}">
+                                {{ label }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Answer Summary -->
+                <div class="flex items-center gap-6 text-sm font-medium">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-user-circle text-gray-400"></i>
+                        <span class="text-gray-700">Your answer: 
+                            <span class="{% if q.is_correct %}text-green-600{% elif not q.user_answer %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                {{ q.user_answer if q.user_answer else 'Not answered' }}
+                            </span>
+                        </span>
+                    </div>
+                    {% if not q.is_correct %}
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-check-circle text-green-500"></i>
+                        <span class="text-gray-700">Correct answer: 
+                            <span class="text-green-600">{{ q.correct }}</span>
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-8 flex justify-center items-center gap-4">
+            <a href="/" class="inline-flex items-center px-8 py-3 bg-gray-100 text-gray-700 
+                              font-semibold rounded-xl hover:bg-gray-200
+                              transition-all duration-300 gap-2">
+                <i class="fas fa-home"></i> Return to Home
+            </a>
+            
+            <!-- Download Quiz PDF -->
+            {% if quiz_file %}
+            <a href="{{ url_for('download_quiz_pdf', quiz_file=quiz_file) }}" 
+               class="inline-flex items-center px-8 py-3 bg-green-600 text-white 
+                      font-semibold rounded-xl hover:bg-green-700
+                      transition-all duration-300 gap-2 shadow-lg">
+                <i class="fas fa-file-pdf"></i> Download Quiz
+            </a>
+            {% endif %}
+            
+            <!-- Download Results PDF -->
+            <a href="{{ url_for('download_result_pdf') }}" 
+               class="inline-flex items-center px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 
+                      text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 
+                      transition-all duration-300 transform hover:scale-105 gap-2 shadow-lg">
+                <i class="fas fa-download"></i> Download Results
+            </a>
+        </div>
+    </div>
+</body>
+</html>

@@ -2,64 +2,654 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Add Questions</title>
+  <meta charset="UTF-8" />
+  <title>{{ 'Edit' if edit_mode else 'Create' }} Quiz</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 py-10">
-  <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
-    <h2 class="text-3xl font-bold text-center text-purple-700 mb-6">Add Quiz Questions</h2>
-    <form action="/save_quiz" method="post" enctype="multipart/form-data">
+<body class="bg-gradient-to-tr from-indigo-100 via-purple-100 to-pink-100 min-h-screen py-6">
+  <!-- Fixed Header -->
+  <div class="fixed top-0 left-0 right-0 bg-white shadow-lg z-50">
+    <div class="max-w-5xl mx-auto px-4 py-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          {{ 'Edit' if edit_mode else 'Create' }} Quiz
+        </h2>
+        <a href="/" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition flex items-center gap-2">
+          <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content with proper spacing from fixed header -->
+  <div class="max-w-5xl mx-auto mt-24 px-4">
+    <form action="/save_quiz" method="post" enctype="multipart/form-data" class="space-y-8">
       <input type="hidden" name="num_questions" value="{{ num_questions }}">
+      {% if edit_mode %}
+      <input type="hidden" name="existing_quiz" value="{{ quiz_file }}">
+      {% endif %}
+
+      <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-3">
+            <span class="w-10 h-10 flex items-center justify-center bg-indigo-100 text-indigo-600 rounded-full">
+              <i class="fas fa-list-ol"></i>
+            </span>
+            <h3 class="text-xl font-semibold text-gray-800">Total Questions: <span id="questionCount">{{ num_questions }}</span></h3>
+          </div>
+          <button type="button" onclick="addNewQuestion()"
+                  class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg 
+                         hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 
+                         flex items-center gap-2 shadow-md hover:shadow-lg transform hover:scale-[1.02]">
+            <i class="fas fa-plus"></i> Add Question
+          </button>
+        </div>
+      </div>
+
       {% for i in range(num_questions) %}
-        <div class="mb-8 border-b pb-6">
-          <h3 class="text-xl font-semibold text-gray-700 mb-4">Question {{ i + 1 }}</h3>
-
-          <label class="block mb-2 font-medium">Type:</label>
-          <select name="qtype_{{ i }}" class="w-full mb-4 p-2 border rounded-md">
-            <option value="text">Text</option>
-            <option value="image">Image</option>
-          </select>
-
-          <label class="block mb-2">Question Text:</label>
-          <input type="text" name="qtext_{{ i }}" class="w-full mb-4 p-2 border rounded-md">
-
-          <label class="block mb-2">Or Upload Image:</label>
-          <input type="file" name="qimg_{{ i }}" class="mb-4">
-
-          <div class="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label>Option A:</label>
-              <input type="text" name="opt_a_{{ i }}" class="w-full p-2 border rounded-md">
+      <div class="question-container bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition duration-300 border border-gray-100 mb-8" 
+           data-index="{{ i }}" id="question_{{ i }}">
+        <div class="flex justify-between items-center mb-8 bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl">
+          <div class="flex items-center gap-4">
+            <div class="cursor-move handle">
+              <i class="fas fa-grip-vertical text-gray-400 hover:text-indigo-600 text-xl"></i>
             </div>
-            <div>
-              <label>Option B:</label>
-              <input type="text" name="opt_b_{{ i }}" class="w-full p-2 border rounded-md">
-            </div>
-            <div>
-              <label>Option C:</label>
-              <input type="text" name="opt_c_{{ i }}" class="w-full p-2 border rounded-md">
-            </div>
-            <div>
-              <label>Option D:</label>
-              <input type="text" name="opt_d_{{ i }}" class="w-full p-2 border rounded-md">
+            <h3 class="text-2xl font-bold text-indigo-700">Question <span class="question-number">{{ i + 1 }}</span></h3>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-sm font-medium">
+              <i class="fas fa-hashtag"></i> <span class="question-count">{{ i + 1 }}/{{ num_questions }}</span>
+            </span>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="deleteQuestion({{ i }})" 
+                      class="p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition" 
+                      title="Delete Question">
+                <i class="fas fa-trash"></i>
+              </button>
+              <button type="button" onclick="duplicateQuestion({{ i }})" 
+                      class="p-2.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                      title="Duplicate Question">
+                <i class="fas fa-copy"></i>
+              </button>
             </div>
           </div>
-
-          <label>Correct Option:</label>
-          <select name="correct_{{ i }}" class="w-full mb-4 p-2 border rounded-md">
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-          </select>
-
-          <label>Marks:</label>
-          <input type="number" name="marks_{{ i }}" class="w-full p-2 border rounded-md">
         </div>
+
+        <!-- Question Type -->
+        <div class="mb-8">
+          <label class="flex items-center text-gray-700 font-medium mb-3">
+            <i class="fas fa-paragraph mr-2"></i> Question Type
+          </label>
+          <div class="flex gap-4">
+            <label class="flex-1">
+              <input type="radio" name="qtype_{{ i }}" value="text" class="hidden question-type-radio" 
+                     data-index="{{ i }}"
+                     {% if not edit_mode or (edit_mode and questions[i]['qtype'] == 'text') %}checked{% endif %}>
+              <div class="text-center p-4 rounded-xl border-2 cursor-pointer transition
+                          {% if not edit_mode or (edit_mode and questions[i]['qtype'] == 'text') %}
+                          border-indigo-500 bg-indigo-50 text-indigo-700
+                          {% else %}
+                          border-gray-200 hover:border-indigo-300
+                          {% endif %}">
+                <i class="fas fa-font text-2xl mb-2"></i>
+                <p class="font-medium">Text</p>
+              </div>
+            </label>
+            <label class="flex-1">
+              <input type="radio" name="qtype_{{ i }}" value="image" class="hidden question-type-radio"
+                     data-index="{{ i }}"
+                     {% if edit_mode and questions[i]['qtype'] == 'image' %}checked{% endif %}>
+              <div class="text-center p-4 rounded-xl border-2 cursor-pointer transition
+                          {% if edit_mode and questions[i]['qtype'] == 'image' %}
+                          border-indigo-500 bg-indigo-50 text-indigo-700
+                          {% else %}
+                          border-gray-200 hover:border-indigo-300
+                          {% endif %}">
+                <i class="fas fa-image text-2xl mb-2"></i>
+                <p class="font-medium">Image</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {% if edit_mode and questions[i]['qtype'] == 'image' and questions[i]['image_url'] %}
+          <input type="hidden" name="existing_image_{{ i }}" value="{{ questions[i]['image_url'] }}">
+        {% endif %}
+
+        <!-- Question Text -->
+        <div class="mb-8">
+          <label class="flex items-center text-gray-700 font-medium mb-3">
+            <i class="fas fa-question-circle mr-2"></i> Question Text
+          </label>
+          <input type="text" name="qtext_{{ i }}" 
+                 class="w-full p-4 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" 
+                 placeholder="Enter your question here..."
+                 value="{{ questions[i]['question'] if edit_mode else '' }}">
+        </div>
+
+        <!-- Image Upload & Paste -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+          <div class="bg-gray-50 p-6 rounded-xl border-2 border-dashed border-gray-300 hover:border-indigo-300 transition">
+            <label class="flex flex-col items-center cursor-pointer">
+              <i class="fas fa-cloud-upload-alt text-3xl text-indigo-500 mb-3"></i>
+              <span class="text-sm text-gray-600 mb-3">Click to upload or drag and drop</span>
+              <input type="file" name="qimg_{{ i }}" id="qimg_{{ i }}" class="hidden" accept="image/*">
+              <span class="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg text-sm font-medium">
+                Browse Files
+              </span>
+            </label>
+          </div>
+          <div>
+            <div class="bg-white border-2 rounded-xl overflow-hidden">
+              <div class="border-b px-4 py-2 bg-gray-50">
+                <label class="text-sm font-medium text-gray-700">
+                  <i class="fas fa-paste mr-1"></i> Paste Image (Ctrl+V)
+                </label>
+              </div>
+              <div contenteditable="true" 
+                   class="paste-area p-4 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500" 
+                   data-index="{{ i }}" 
+                   id="paste_area_{{ i }}">
+                <span class="text-gray-400">Paste your image here...</span>
+              </div>
+            </div>
+            <div class="relative mt-3">
+              <img id="preview_{{ i }}" 
+                   class="{% if not (edit_mode and questions[i]['image_url']) %}hidden{% endif %} max-w-full rounded-xl shadow-lg" 
+                   {% if edit_mode and questions[i]['image_url'] %}src="{{ questions[i]['image_url'] }}"{% endif %} />
+              {% if edit_mode and questions[i]['image_url'] %}
+              <button type="button" 
+                      onclick="removeImage('{{ i }}')"
+                      class="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition shadow-lg"
+                      title="Remove Image">
+                <i class="fas fa-times"></i>
+              </button>
+              <input type="hidden" name="existing_image_{{ i }}" value="{{ questions[i]['image_url'] }}">
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Options -->
+        <div class="mb-8">
+          <label class="flex items-center text-gray-700 font-medium mb-4">
+            <i class="fas fa-list-ol mr-2"></i> Answer Options
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {% for opt in ['A', 'B', 'C', 'D'] %}
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                <span class="w-7 h-7 flex items-center justify-center bg-indigo-100 text-indigo-700 rounded-full font-semibold">
+                  {{ opt }}
+                </span>
+              </div>
+              <input type="text" 
+                     name="opt_{{ opt.lower() }}_{{ i }}" 
+                     class="w-full pl-14 pr-12 py-3.5 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" 
+                     placeholder="Enter option {{ opt }}" 
+                     value="{{ questions[i]['opt_' + opt.lower()] if edit_mode else '' }}">
+              <label class="absolute inset-y-0 right-0 flex items-center pr-4">
+                <input type="radio" 
+                       name="correct_{{ i }}" 
+                       value="{{ opt }}" 
+                       class="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                       {% if edit_mode and questions[i]['correct'] == opt %}checked{% endif %}>
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+          <p class="mt-3 text-sm text-gray-500 flex items-center gap-2">
+            <i class="fas fa-info-circle"></i> Select the radio button next to the correct answer
+          </p>
+        </div>
+
+        <!-- Marks -->
+        <div class="mb-6">
+          <label class="flex items-center text-gray-700 font-medium mb-3">
+            <i class="fas fa-star mr-2"></i> Question Marks
+          </label>
+          <div class="relative max-w-xs">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <i class="fas fa-trophy text-gray-400"></i>
+            </div>
+            <input type="number" 
+                   name="marks_{{ i }}" 
+                   class="w-full pl-11 pr-16 py-3.5 border-2 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" 
+                   placeholder="Enter marks"
+                   value="{{ questions[i]['marks'] if edit_mode else 4 }}"
+                   min="1">
+            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+              <span class="text-gray-400">points</span>
+            </div>
+          </div>
+        </div>
+      </div>
       {% endfor %}
-      <button type="submit" class="w-full bg-green-600 text-white py-2 rounded-xl hover:bg-green-700 transition">Save Quiz</button>
+
+      <!-- Fixed Bottom Action Bar -->
+      <div class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4">
+          <div class="flex justify-between items-center">
+            <a href="/" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition flex items-center gap-2">
+              <i class="fas fa-times"></i> Cancel
+            </a>
+            <button type="submit" 
+                    class="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl 
+                           hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 
+                           flex items-center gap-2 shadow-lg">
+              <i class="fas fa-save"></i> 
+              {{ 'Save Changes' if edit_mode else 'Create Quiz' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Spacing for Fixed Action Bar -->
+      <div class="h-24"></div>
     </form>
   </div>
+
+  <script>
+    document.querySelectorAll('.paste-area').forEach(function (area) {
+      const placeholder = area.querySelector('span');
+      
+      area.addEventListener('paste', function (e) {
+        e.preventDefault();
+        const items = (e.clipboardData || window.clipboardData).items;
+        
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            const reader = new FileReader();
+            const idx = area.getAttribute('data-index');
+            
+            reader.onload = function (event) {
+              // Remove placeholder and clear paste area
+              if (placeholder) {
+                placeholder.remove();
+              }
+              area.innerHTML = '';
+              
+              // Show preview
+              const img = document.getElementById('preview_' + idx);
+              img.src = event.target.result;
+              img.classList.remove('hidden');
+              
+              // Update file input
+              const fileInput = document.getElementById('qimg_' + idx);
+              const dt = new DataTransfer();
+              const newFile = new File([file], 'pasted_image_' + Date.now() + '.png', {
+                type: 'image/png'
+              });
+              dt.items.add(newFile);
+              fileInput.files = dt.files;
+
+              // Set question type to image using radio button
+              const imageRadio = document.querySelector(`input[name="qtype_${idx}"][value="image"]`);
+              if (imageRadio) {
+                imageRadio.checked = true;
+                // Update the visual state of the radio button container
+                const allContainers = document.querySelectorAll(`[name="qtype_${idx}"]`).forEach(radio => {
+                  const container = radio.nextElementSibling;
+                  if (container) {
+                    if (radio.value === 'image') {
+                      container.classList.add('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+                      container.classList.remove('border-gray-200');
+                    } else {
+                      container.classList.remove('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+                      container.classList.add('border-gray-200');
+                    }
+                  }
+                });
+              }
+
+              // Show a success message
+              const successMsg = document.createElement('div');
+              successMsg.className = 'text-green-600 text-sm mt-2';
+              successMsg.innerHTML = '<i class="fas fa-check-circle"></i> Image pasted successfully';
+              area.parentNode.appendChild(successMsg);
+              setTimeout(() => successMsg.remove(), 3000);
+            };
+            
+            reader.readAsDataURL(file);
+            break;
+          }
+        }
+      });
+      
+      // Clear placeholder on click
+      area.addEventListener('click', function() {
+        if (placeholder && !document.getElementById('preview_' + area.getAttribute('data-index')).src) {
+          placeholder.textContent = '';
+        }
+      });
+      
+      // Reset placeholder if empty and no image
+      area.addEventListener('blur', function() {
+        const previewImg = document.getElementById('preview_' + area.getAttribute('data-index'));
+        if (area.textContent.trim() === '' && (!previewImg.src || previewImg.src === window.location.href)) {
+          area.innerHTML = '<span class="text-gray-400">Paste image here...</span>';
+        }
+      });
+    });
+
+    // Handle file input change
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+      input.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+          const idx = this.id.replace('qimg_', '');
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            const img = document.getElementById('preview_' + idx);
+            img.src = e.target.result;
+            img.classList.remove('hidden');
+            
+            // Set question type to image using radio button
+            const imageRadio = document.querySelector(`input[name="qtype_${idx}"][value="image"]`);
+            if (imageRadio) {
+              imageRadio.checked = true;
+              imageRadio.dispatchEvent(new Event('change'));
+            }
+          }
+          
+          reader.readAsDataURL(this.files[0]);
+        }
+      });
+    });
+
+    // Question Management Functions
+    function updateQuestionNumbers() {
+      document.querySelectorAll('.question-container').forEach((container, index) => {
+        container.setAttribute('data-index', index);
+        container.id = `question_${index}`;
+        container.querySelector('.question-number').textContent = index + 1;
+        container.querySelector('.question-count').textContent = `${index + 1}/${document.querySelectorAll('.question-container').length}`;
+        
+        // Update input names
+        ['qtype', 'qtext', 'qimg', 'marks', 'correct'].forEach(prefix => {
+          const elements = container.querySelectorAll(`[name^="${prefix}_"]`);
+          elements.forEach(el => {
+            el.name = `${prefix}_${index}`;
+            if (el.id) el.id = `${prefix}_${index}`;
+          });
+        });
+        
+        // Update option names
+        ['a', 'b', 'c', 'd'].forEach(opt => {
+          const input = container.querySelector(`[name^="opt_${opt}_"]`);
+          if (input) input.name = `opt_${opt}_${index}`;
+        });
+
+        // Update paste area and preview
+        const pasteArea = container.querySelector('.paste-area');
+        if (pasteArea) {
+          pasteArea.setAttribute('data-index', index);
+          pasteArea.id = `paste_area_${index}`;
+        }
+        const preview = container.querySelector('img[id^="preview_"]');
+        if (preview) preview.id = `preview_${index}`;
+      });
+
+      // Update total questions count
+      document.querySelector('input[name="num_questions"]').value = document.querySelectorAll('.question-container').length;
+    }
+
+    function deleteQuestion(index) {
+      if (document.querySelectorAll('.question-container').length <= 1) {
+        alert('Cannot delete the last question. At least one question is required.');
+        return;
+      }
+
+      if (confirm('Are you sure you want to delete this question?')) {
+        const container = document.getElementById(`question_${index}`);
+        container.remove();
+        updateQuestionNumbers();
+      }
+    }
+
+    function duplicateQuestion(index) {
+      const original = document.getElementById(`question_${index}`);
+      const clone = original.cloneNode(true);
+      
+      // Clear file inputs and previews
+      clone.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
+      clone.querySelectorAll('img[id^="preview_"]').forEach(img => {
+        img.src = '';
+        img.classList.add('hidden');
+      });
+      
+      // Clear paste areas
+      clone.querySelectorAll('.paste-area').forEach(area => {
+        area.innerHTML = '<span class="text-gray-400">Paste image here...</span>';
+      });
+      
+      original.after(clone);
+      updateQuestionNumbers();
+      setupEventListeners(clone);
+    }
+
+    // Remove image function
+    function removeImage(index) {
+      if (confirm('Are you sure you want to remove this image?')) {
+        const preview = document.getElementById(`preview_${index}`);
+        const fileInput = document.getElementById(`qimg_${index}`);
+        const container = document.getElementById(`question_${index}`);
+        const existingImageInput = container.querySelector(`input[name="existing_image_${index}"]`);
+        
+        // Hide and clear preview
+        preview.src = '';
+        preview.classList.add('hidden');
+        
+        // Clear file input
+        fileInput.value = '';
+        
+        // Remove existing image input if it exists
+        if (existingImageInput) {
+          existingImageInput.remove();
+        }
+        
+        // Reset paste area
+        const pasteArea = document.getElementById(`paste_area_${index}`);
+        pasteArea.innerHTML = '<span class="text-gray-400">Paste image here...</span>';
+        
+        // Set question type back to text
+        const textRadio = document.querySelector(`input[name="qtype_${index}"][value="text"]`);
+        if (textRadio) {
+          textRadio.checked = true;
+          const allContainers = document.querySelectorAll(`[name="qtype_${index}"]`).forEach(radio => {
+            const container = radio.nextElementSibling;
+            if (container) {
+              if (radio.value === 'text') {
+                container.classList.add('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+                container.classList.remove('border-gray-200');
+              } else {
+                container.classList.remove('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+                container.classList.add('border-gray-200');
+              }
+            }
+          });
+        }
+      }
+    }
+
+    function addNewQuestion() {
+      const template = document.querySelector('.question-container:last-child');
+      const newQuestion = template.cloneNode(true);
+      const currentIndex = document.querySelectorAll('.question-container').length;
+      
+      // Update the new question's index
+      newQuestion.setAttribute('data-index', currentIndex);
+      newQuestion.id = `question_${currentIndex}`;
+      
+      // Clear all inputs
+      newQuestion.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => {
+        input.value = '';
+        // Update name attribute
+        const nameBase = input.name.split('_')[0];
+        input.name = `${nameBase}_${currentIndex}`;
+      });
+      
+      // Clear file inputs
+      newQuestion.querySelectorAll('input[type="file"]').forEach(input => {
+        input.value = '';
+        input.id = `qimg_${currentIndex}`;
+        input.name = `qimg_${currentIndex}`;
+      });
+      
+      // Clear and reset image preview
+      newQuestion.querySelectorAll('img[id^="preview_"]').forEach(img => {
+        img.src = '';
+        img.classList.add('hidden');
+        img.id = `preview_${currentIndex}`;
+      });
+      
+      // Clear paste area and update its index
+      newQuestion.querySelectorAll('.paste-area').forEach(area => {
+        area.innerHTML = '<span class="text-gray-400">Paste image here...</span>';
+        area.setAttribute('data-index', currentIndex);
+        area.id = `paste_area_${currentIndex}`;
+      });
+      
+      // Update radio buttons
+      newQuestion.querySelectorAll('input[type="radio"]').forEach(radio => {
+        const nameBase = radio.name.split('_')[0];
+        radio.name = `${nameBase}_${currentIndex}`;
+        radio.checked = false;
+      });
+      
+      // Set default values
+      const typeRadio = newQuestion.querySelector('input[value="text"]');
+      if (typeRadio) {
+        typeRadio.checked = true;
+        const container = typeRadio.nextElementSibling;
+        if (container) {
+          container.classList.add('border-indigo-500', 'bg-indigo-50', 'text-indigo-700');
+          container.classList.remove('border-gray-200');
+        }
+      }
+      
+      const marksInput = newQuestion.querySelector('input[name^="marks_"]');
+      if (marksInput) {
+        marksInput.value = '4';
+      }
+      
+      // Update question number and count
+      newQuestion.querySelector('.question-number').textContent = currentIndex + 1;
+      newQuestion.querySelector('.question-count').textContent = `${currentIndex + 1}/${currentIndex + 1}`;
+      
+      // Remove any existing image elements
+      const existingImageInput = newQuestion.querySelector('input[name^="existing_image_"]');
+      if (existingImageInput) {
+        existingImageInput.remove();
+      }
+      const removeImageBtn = newQuestion.querySelector('button[onclick^="removeImage"]');
+      if (removeImageBtn) {
+        removeImageBtn.remove();
+      }
+      
+      // Add the new question to the form
+      template.parentNode.appendChild(newQuestion);
+      
+      // Update form count
+      document.querySelector('input[name="num_questions"]').value = currentIndex + 1;
+      
+      // Setup event listeners for the new question
+      setupEventListeners(newQuestion);
+    }
+
+    function setupEventListeners(container) {
+      // Reinitialize paste area listeners
+      container.querySelectorAll('.paste-area').forEach(area => {
+        const placeholder = area.querySelector('span');
+        
+        area.addEventListener('paste', function (e) {
+          // ... existing paste event listener code ...
+        });
+        
+        area.addEventListener('click', function() {
+          if (placeholder && !document.getElementById('preview_' + area.getAttribute('data-index')).src) {
+            placeholder.textContent = '';
+          }
+        });
+        
+        area.addEventListener('blur', function() {
+          const previewImg = document.getElementById('preview_' + area.getAttribute('data-index'));
+          if (area.textContent.trim() === '' && (!previewImg.src || previewImg.src === window.location.href)) {
+            area.innerHTML = '<span class="text-gray-400">Paste image here...</span>';
+          }
+        });
+      });
+
+      // Reinitialize file input listeners
+      container.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', function(e) {
+          if (this.files && this.files[0]) {
+            const idx = this.id.replace('qimg_', '');
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+              const img = document.getElementById('preview_' + idx);
+              img.src = e.target.result;
+              img.classList.remove('hidden');
+              
+              const imageRadio = document.querySelector(`input[name="qtype_${idx}"][value="image"]`);
+              if (imageRadio) {
+                imageRadio.checked = true;
+                imageRadio.dispatchEvent(new Event('change'));
+              }
+            }
+            
+            reader.readAsDataURL(this.files[0]);
+          }
+        });
+      });
+    }
+
+    // Initialize drag and drop sorting
+    const questionList = document.querySelector('form');
+    new Sortable(questionList, {
+      handle: '.handle',
+      animation: 150,
+      filter: ':not(.question-container)',
+      onEnd: function() {
+        updateQuestionNumbers();
+      }
+    });
+
+    // Initialize event listeners for question type radios
+    document.querySelectorAll('.question-type-radio').forEach(radio => {
+      radio.addEventListener('change', function() {
+        const index = this.getAttribute('data-index');
+        const container = document.getElementById(`question_${index}`);
+        const preview = document.getElementById(`preview_${index}`);
+        const pasteArea = document.getElementById(`paste_area_${index}`);
+        
+        if (this.value === 'text') {
+          // Hide image preview when switching to text
+          if (preview) {
+            preview.classList.add('hidden');
+          }
+        }
+      });
+    });
+
+    // Handle existing images in edit mode
+    document.querySelectorAll('img[id^="preview_"]').forEach(img => {
+      if (img.src && !img.src.endsWith('undefined') && img.src !== window.location.href) {
+        img.classList.remove('hidden');
+        const index = img.id.replace('preview_', '');
+        const pasteArea = document.getElementById(`paste_area_${index}`);
+        if (pasteArea) {
+          pasteArea.innerHTML = '';
+        }
+      }
+    });
+  </script>
+
+  <!-- Include Sortable.js for drag-and-drop reordering -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </body>
 </html>
+
